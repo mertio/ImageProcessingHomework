@@ -2,6 +2,7 @@ import com.sun.org.apache.regexp.internal.RE;
 
 import javax.imageio.ImageIO;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -137,6 +138,34 @@ public class MyImage {
 
 
     }
+
+    public void setPixelNoAlpha(BufferedImage img, int x, int y, Channel channel, int newValue) {
+
+        int pixel  = img.getRGB(x,y);
+
+        int red = (pixel >> 16) & 0xff;
+        int green = (pixel >> 8) & 0xff;
+        int blue = (pixel) & 0xff;
+
+        switch (channel) {
+            case RED:
+                red = newValue;
+                break;
+            case BLUE:
+                blue = newValue;
+                break;
+            case GREEN:
+                green = newValue;
+                break;
+
+        }
+
+        int sum = (red << 16) + (green << 8) + blue;
+        img.setRGB(x,y,sum);
+
+
+    }
+
 
     public void copyImage(String pathAndFile) {
         try {
@@ -275,14 +304,14 @@ public class MyImage {
                 C = getPixel((int)px, (int)py + 1, Channel.RED);
                 D = getPixel((int)px + 1, (int)py + 1, Channel.RED);
 
-                r = (int)(A * (1 - xdiff) * (1 - ydiff) + B * xdiff * (1 - ydiff) + C * ydiff * (1 - xdiff) + D * xdiff * ydiff);
+                r = (int)((A * (1 - xdiff) * (1 - ydiff)) + (B * xdiff * (1 - ydiff)) + (C * ydiff * (1 - xdiff)) + (D * xdiff * ydiff));
 
                 A = getPixel( (int)px, (int)py, Channel.GREEN);
                 B = getPixel( (int)px + 1, (int)py, Channel.GREEN);
                 C = getPixel( (int)px, (int)py + 1, Channel.GREEN);
                 D = getPixel( (int)px + 1, (int)py + 1, Channel.GREEN);
 
-                g = (int)(A * (1 - xdiff) * (1 - ydiff) + B * xdiff * (1 - ydiff) + C * ydiff * (1 - xdiff) + D * xdiff * ydiff);
+                g = (int)((A * (1 - xdiff) * (1 - ydiff)) + (B * xdiff * (1 - ydiff)) + (C * ydiff * (1 - xdiff)) + (D * xdiff * ydiff));
 
                 A = getPixel( (int)px, (int)py, Channel.BLUE);
                 B = getPixel( (int)px + 1, (int)py, Channel.BLUE);
@@ -291,11 +320,10 @@ public class MyImage {
 
                 b = (int)(A * (1 - xdiff) * (1 - ydiff) + B * xdiff * (1 - ydiff) + C * ydiff * (1 - xdiff) + D * xdiff * ydiff);
 
+                setPixelNoAlpha(img, x, y, Channel.RED, r);
+                setPixelNoAlpha(img, x, y, Channel.GREEN, g);
+                setPixelNoAlpha(img, x, y, Channel.BLUE, b);
 
-
-                setPixel(img, x, y, Channel.RED, r);
-                setPixel(img, x, y, Channel.BLUE, b);
-                setPixel(img, x, y, Channel.GREEN, g);
 
             }
         }
