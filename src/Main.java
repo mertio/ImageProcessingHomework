@@ -2,17 +2,15 @@ public class Main {
 
     public static void main(String[] args) {
 
-        MyImage myImage = new MyImage("res/aboubakar.jpg");
+        MyImage myImage = new MyImage("res/sample.jpeg");
 
-        // enums: RED, BLUE, GREEN, ALPHA
-        System.out.println("RED value of pixel(3,4): " + myImage.getPixel(3,4, MyImage.Channel.RED));
 
-        // image to greyscale
-        myImage.rgb2GreyScale();
+        // scale to HD with neighbor resize
+        //myImage.neighborResize(1920,1080);
 
-        // sol true : maximizes channel at a high enough constant value (e.g. 255)
-        // sol false : loops around at a high enough constant value (e.g. 255)
-        //myImage.shift(MyImage.Channel.GREEN, 40, true);
+        // scale to HD with bilinear resize
+        myImage.bilinearResize(800, 600);
+
 
 
     }
