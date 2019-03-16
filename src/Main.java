@@ -14,7 +14,7 @@ public class Main {
 
         // BILINEAR RESIZE
         // scale to HD with bilinear resize
-        //myImage.bilinearResize(1920, 1080);
+        // myImage.bilinearResize(1920, 1080);
 
         // ***********************************************************************************************
 
@@ -50,13 +50,13 @@ public class Main {
         // Look in finalHybrid.jpg for result
 
         //generateHybridImage("res/david.jpg", "res/victoria.jpg",800,600);
-        //generateHybridImage("res/kaplan.jpg", "res/orangutan.jpg", 600,600);
+        // generateHybridImage("res/kaplan.jpg", "res/orangutan.jpg", 600,600);
 
 
         // ***********************************************************************************************
 
 
-        // Applies Sobel filter (Look in finalHybrid.jpg for result)
+        // Applies Sobel filter (Look in finalSobel.jpg for result)
         applyFullSobel("res/sample.jpeg");
 
 
@@ -72,7 +72,7 @@ public class Main {
         myImage.applySobelFilterY();
         MyImage i1 = new MyImage("res/applied_sobel_filterX.jpg");
         MyImage i2 = new MyImage("res/applied_sobel_filterY.jpg");
-        addImages(i1,i2);
+        addImages(i1,i2, false);
 
     }
 
@@ -109,7 +109,7 @@ public class Main {
         firstImageWithGaussian = new MyImage("res/hybrid/resized1.jpg");
         subtractedImage.bilinearResize(w,h, "res/hybrid/resized2.jpg");
         subtractedImage = new MyImage("res/hybrid/resized2.jpg");
-        addImages(firstImageWithGaussian, subtractedImage);
+        addImages(firstImageWithGaussian, subtractedImage, true);
 
 
 
@@ -120,7 +120,7 @@ public class Main {
 
     }
 
-    public static MyImage addImages(MyImage firstImage, MyImage secondImage) {
+    public static MyImage addImages(MyImage firstImage, MyImage secondImage, boolean isHybrid) {
 
         for(int i = 0; i < firstImage.getImageFile().getWidth(); i++) {
             for(int j = 0; j < secondImage.getImageFile().getHeight(); j++) {
@@ -148,8 +148,14 @@ public class Main {
 
             }
         }
-        firstImage.copyImage("res/finalHybrid.jpg");
-        return new MyImage("res/finalHybrid.jpg");
+        if(isHybrid) {
+            firstImage.copyImage("res/finalHybrid.jpg");
+            return new MyImage("res/finalHybrid.jpg");
+        }
+        else {
+            firstImage.copyImage("res/finalSobel.jpg");
+            return new MyImage("res/finalSobel.jpg");
+        }
     }
 
     // subtract second from first
