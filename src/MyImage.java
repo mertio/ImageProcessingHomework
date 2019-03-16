@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+import static java.lang.Math.exp;
+
 public class MyImage {
 
     public enum Channel {
@@ -213,6 +215,35 @@ public class MyImage {
 
     }
 
+    public void rgb2GreyScale(String path) {
+
+        int red;
+        int green;
+        int blue;
+
+        // Luminosity constants
+        float r = 0.21f;
+        float g = 0.72f;
+        float b = 0.07f;
+
+
+        for(int x = 0; x < imageFile.getWidth(); x++) {
+            for(int y = 0; y < imageFile.getHeight(); y++) {
+                red = getPixel(x,y,Channel.RED);
+                blue = getPixel(x,y,Channel.BLUE);
+                green = getPixel(x,y,Channel.GREEN);
+
+                float grayValue = r*red + g*green + b*blue;
+                setPixel(x,y, Channel.RED,(int)grayValue);
+                setPixel(x,y, Channel.BLUE,(int)grayValue);
+                setPixel(x,y, Channel.GREEN,(int)grayValue);
+
+            }
+        }
+        copyImage(path);
+
+    }
+
     public void shift(Channel channel, int value, boolean sol) {
 
         int red;
@@ -387,6 +418,62 @@ public class MyImage {
     }
 
 
+    public void bilinearResize(int newWidth, int newHeight, String path) {
+
+        int oldWidth = imageFile.getWidth();
+        int oldHeight = imageFile.getHeight();
+
+        double xRatio = (oldWidth - 1) / (double) newWidth;
+        double yRatio = (oldHeight - 1) / (double) newHeight;
+
+        BufferedImage img = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+
+        int px,py;
+        double xdiff, ydiff;
+        int A, B, C, D;
+        for(int x = 0; x < newWidth; x++) {
+            for(int y = 0; y < newHeight; y++) {
+
+                px = (int)(x*xRatio);
+                py = (int)(y*yRatio);
+
+                xdiff = x*xRatio - px;
+                ydiff = y*yRatio - py;
+
+                int r,g,b;
+
+                A = getPixel((int)px, (int)py, Channel.RED);
+                B = getPixel((int)px + 1, (int)py, Channel.RED);
+                C = getPixel((int)px, (int)py + 1, Channel.RED);
+                D = getPixel((int)px + 1, (int)py + 1, Channel.RED);
+
+                r = (int)((A * (1 - xdiff) * (1 - ydiff)) + (B * xdiff * (1 - ydiff)) + (C * ydiff * (1 - xdiff)) + (D * xdiff * ydiff));
+
+                A = getPixel( (int)px, (int)py, Channel.GREEN);
+                B = getPixel( (int)px + 1, (int)py, Channel.GREEN);
+                C = getPixel( (int)px, (int)py + 1, Channel.GREEN);
+                D = getPixel( (int)px + 1, (int)py + 1, Channel.GREEN);
+
+                g = (int)((A * (1 - xdiff) * (1 - ydiff)) + (B * xdiff * (1 - ydiff)) + (C * ydiff * (1 - xdiff)) + (D * xdiff * ydiff));
+
+                A = getPixel( (int)px, (int)py, Channel.BLUE);
+                B = getPixel( (int)px + 1, (int)py, Channel.BLUE);
+                C = getPixel( (int)px, (int)py + 1, Channel.BLUE);
+                D = getPixel( (int)px + 1, (int)py + 1, Channel.BLUE);
+
+                b = (int)(A * (1 - xdiff) * (1 - ydiff) + B * xdiff * (1 - ydiff) + C * ydiff * (1 - xdiff) + D * xdiff * ydiff);
+
+
+                img.setRGB(x,y,new Color(r,b,g).getRGB());
+
+
+            }
+        }
+
+        createImageFile(img,path);
+    }
+
+
 
 
     public void neighborResize(int newWidth, int newHeight) {
@@ -504,6 +591,25 @@ public class MyImage {
         createImageFile(img,"res/applied_emboss_filter.jpg");
     }
 
+    public void applyGaussianFilter(int size, double sigma, String path) {
+        double[][] filter = getGaussianFilter(size,sigma);
+        BufferedImage img = convolve(filter);
+        createImageFile(img,path);
+    }
+
+    public void applySobelFilterX() {
+        double[][] filter = getSobelFilterX();
+        BufferedImage img = correlate(filter);
+        createImageFile(img,"res/applied_sobel_filterX.jpg");
+    }
+    public void applySobelFilterY() {
+        double[][] filter = getSobelFilterY();
+        BufferedImage img = correlate(filter);
+        createImageFile(img,"res/applied_sobel_filterY.jpg");
+    }
+
+
+
 
     private double[][] getBoxFilter(int w) {
 
@@ -584,12 +690,66 @@ public class MyImage {
         return embossFilter;
     }
 
+
     //TODO
-    private int[][] getGaussianFilter(float sigma) {
+    private double[][] getSobelFilterX() {
 
 
+        double[][] sobelFilterX = {
+                {-1, 0, 1},
+                {-2, 0, 2},
+                {-1, 0, 1}
+        };
 
-        return null;
+        return sobelFilterX;
+    }
+
+    //TODO
+    private double[][] getSobelFilterY() {
+
+
+        double[][] sobelFilterY = {
+                {1, 2,1},
+                {0, 0, 0},
+                {-1, -2, -1}
+        };
+
+        return sobelFilterY;
+    }
+
+    //TODO
+    private double[][] getGaussianFilter(int size, double sigma) {
+
+        double[][] gaussianFilter = new double[size][size];
+
+        double mean = size/2.0;
+        double sum = 0.0;
+
+        for ( int x = 0; x < size; ++x ) {
+            for (int y = 0; y < size; ++y) {
+
+                gaussianFilter[x][y] = Math.exp(-0.5 * (Math.pow((x - mean) / sigma, 2.0) + Math.pow((y - mean) / sigma, 2.0)))
+                        / (2 * Math.PI * sigma * sigma);
+                sum += gaussianFilter[x][y];
+
+            }
+        }
+
+        // Normalizing the kernel
+        for (int x = 0; x < size; ++x) {
+            for (int y = 0; y < size; ++y) {
+                gaussianFilter[x][y] /= sum;
+            }
+        }
+
+        System.out.println("Gaussian Kernel: ");
+        for (int x = 0; x < size; ++x) {
+            for (int y = 0; y < size; ++y) {
+                System.out.print(gaussianFilter[x][y] + " ");
+            }
+            System.out.println();
+        }
+        return gaussianFilter;
     }
 
     private BufferedImage correlate(double[][] filter) {
@@ -671,6 +831,7 @@ public class MyImage {
 
         return filter;
     }
+
 
 
 
