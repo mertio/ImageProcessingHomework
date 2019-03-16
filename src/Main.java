@@ -10,34 +10,50 @@ public class Main {
         // scale to HD with neighbor resize
         //myImage.neighborResize(1920,1080);
 
+        // ***********************************************************************************************
+
         // BILINEAR RESIZE
         // scale to HD with bilinear resize
         //myImage.bilinearResize(1920, 1080);
 
+        // ***********************************************************************************************
 
         // Applies box filter to sample, image shrinks and gets black frame because
         // edges and resize aren't handled
         //myImage.applyBoxFilter(9);
 
+        // ***********************************************************************************************
 
         // Applies highpass filter
         // can use 3 types of filters as param x = 0 or 1 or 2
         //myImage.applyHighpassFilter(0);
 
+        // ***********************************************************************************************
 
         // Applies sharpen filter
         //myImage.applySharpenFilter();
 
+        // ***********************************************************************************************
+
         // Applies Emboss filter
         //myImage.applyEmbossFilter();
+
+        // ***********************************************************************************************
 
         // Applies gaussian filter
         // myImage.applyGaussianFilter(5,1,"res/applied_gaussian_filter.jpg");
 
+        // ***********************************************************************************************
 
         // Generates hybrid image, finalHybrid. Something is not right but I couldn't find what.
+        // (res/hybrid has intermediate images during hybrid generation)
+        // Look in finalHybrid.jpg for result
+
         //generateHybridImage("res/david.jpg", "res/victoria.jpg",800,600);
         //generateHybridImage("res/kaplan.jpg", "res/orangutan.jpg", 600,600);
+
+
+        // ***********************************************************************************************
 
 
         // Applies Sobel filter (Look in finalHybrid.jpg for result)
