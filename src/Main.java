@@ -1,69 +1,117 @@
 import com.sun.org.apache.regexp.internal.RE;
+import fourier.ComplexNumber;
+import fourier.FFT;
+
+import java.util.Arrays;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        MyImage myImage = new MyImage("res/sample.jpeg");
+        MyImage myImage = new MyImage("res/sample.jpeg"); // res/lena.png, res/kaplan.jpg, res/orangutan.jpg, res/david.jpg, res/victoria.jpg are other options
 
-        // NEIGHBOR RESIZE
-        // scale to HD with neighbor resize
-        //myImage.neighborResize(1920,1080);
+        //Adds salt and pepper to image and outputs saltAndPepper.jpg in res folder
+        myImage.addSaltAndPepper(40);
 
-        // ***********************************************************************************************
+        MyImage i = new MyImage("res/saltAndPepper.jpg");
+        i.removeSaltAndPepper();
 
-        // BILINEAR RESIZE
-        // scale to HD with bilinear resize
-        // myImage.bilinearResize(1920, 1080);
+        // adds gaussian noise to image and outputs withGaussianNoise.jpg in res folder
+        myImage.addGaussianNoise(2000,1);
 
-        // ***********************************************************************************************
-
-        // Applies box filter to sample, image shrinks and gets black frame because
-        // edges and resize aren't handled
-        //myImage.applyBoxFilter(9);
-
-        // ***********************************************************************************************
-
-        // Applies highpass filter
-        // can use 3 types of filters as param x = 0 or 1 or 2
-        //myImage.applyHighpassFilter(0);
-
-        // ***********************************************************************************************
-
-        // Applies sharpen filter
-        //myImage.applySharpenFilter();
-
-        // ***********************************************************************************************
-
-        // Applies Emboss filter
-        //myImage.applyEmbossFilter();
-
-        // ***********************************************************************************************
-
-        // Applies gaussian filter
-        // myImage.applyGaussianFilter(5,1,"res/applied_gaussian_filter.jpg");
-
-        // ***********************************************************************************************
-
-        // Generates hybrid image, finalHybrid. Something is not right but I couldn't find what.
-        // (res/hybrid has intermediate images during hybrid generation)
-        // Look in finalHybrid.jpg for result
-
-        //generateHybridImage("res/david.jpg", "res/victoria.jpg",800,600);
-        // generateHybridImage("res/kaplan.jpg", "res/orangutan.jpg", 600,600);
+        // removed gaussian noise with gaussian blur filter
+        MyImage im = new MyImage("res/withGaussianNoise.jpg");
+        im.applyGaussianFilter(5,5, "res/gaussianNoiseRemoved.jpg");
 
 
-        // ***********************************************************************************************
+
+        // For the FFT, algorithm, I couldn't do it from scratch but I took some code from a Java framework called Catalano and integrated some of their
+        // algorithms into my own work. I hope this is ok.
+        // Link: https://github.com/DiegoCatalano/Catalano-Framework
 
 
-        // Applies Sobel filter (Look in finalSobel.jpg for result)
-        applyFullSobel("res/sample.jpeg");
+        int resizedWidth = 512;
+
+        String imagePath = "res/sample.jpeg"; // res/lena.png, res/kaplan.jpg, res/orangutan.jpg, res/david.jpg, res/victoria.jpg are other options
+
+        // get image in complex numbers
+        ComplexNumber[][] imageAsComplex = getImageInComplexForm(imagePath, resizedWidth);
+
+        // convert to frequency domain
+        FFT.fft2D(imageAsComplex, FFT.Direction.FORWARD);
+        FFT.saveFourierImage(imageAsComplex, resizedWidth, resizedWidth, true, "imageInFrequencyDomain.jpg");
+
+        // convert back to spatial domain
+        FFT.fft2D(imageAsComplex, FFT.Direction.BACKWARD);
+        FFT.saveFourierImage(imageAsComplex, resizedWidth, resizedWidth, false, "imageConvertedBackToSpatialDomain.jpg");
+
+        // get original image again
+        imageAsComplex = getImageInComplexForm(imagePath, resizedWidth);
+
+        // apply highpass fourier filter and save result
+        FFT.fft2D(imageAsComplex, FFT.Direction.FORWARD);
+        FFT.fourierHighPass(imageAsComplex, 5);
+        FFT.fft2D(imageAsComplex, FFT.Direction.BACKWARD);
+        FFT.saveFourierImage(imageAsComplex, resizedWidth, resizedWidth, false, "highPassFilter.jpg");
+
+
+        // get original
+        imageAsComplex = getImageInComplexForm(imagePath, resizedWidth);
+
+
+        // apply periodic noise and save result
+        FFT.fft2D(imageAsComplex, FFT.Direction.FORWARD);
+        FFT.addPeriodicNoise(imageAsComplex);
+        FFT.fft2D(imageAsComplex, FFT.Direction.BACKWARD);
+        FFT.saveFourierImage(imageAsComplex, resizedWidth, resizedWidth, false, "addedPeriodicNoise.jpg");
+
+
+        // get the one with periodic noise
+        imageAsComplex = getImageInComplexForm("res/fourier/addedPeriodicNoise.jpg", resizedWidth);
+
+        // remove periodic noise and save result (not very good but still removes some of it)
+        FFT.fft2D(imageAsComplex, FFT.Direction.FORWARD);
+        FFT.removePeriodicNoise(imageAsComplex);
+        FFT.fft2D(imageAsComplex, FFT.Direction.BACKWARD);
+        FFT.saveFourierImage(imageAsComplex, resizedWidth, resizedWidth, false, "removedPeriodicNoise.jpg");
+
+
+
+
+
+
 
 
 
 
 
     }
+
+
+    public static ComplexNumber[][] getImageInComplexForm(String filePath, int resizedWidth) {
+
+        MyImage myImage = new MyImage(filePath);
+
+        myImage.bilinearResize(resizedWidth, resizedWidth, "res/fourier/resizedForFFT.jpeg");
+        myImage = new MyImage("res/fourier/resizedForFFT.jpeg");
+        myImage.rgb2GreyScale("res/fourier/grayScaledForFFT.jpg");
+        myImage = new MyImage("res/fourier/grayScaledForFFT.jpg");
+
+
+        ComplexNumber[][] imageAsComplex = new ComplexNumber[resizedWidth][resizedWidth];
+
+        for (int i = 0; i < resizedWidth; i++) {
+            for (int j = 0; j < resizedWidth; j++) {
+
+                imageAsComplex[i][j] = new ComplexNumber();
+                imageAsComplex[i][j].real = myImage.getPixel(i,j, MyImage.Channel.RED);
+
+
+            }
+        }
+        return imageAsComplex;
+    }
+
 
     public static void applyFullSobel(String path) {
         MyImage myImage = new MyImage(path);
